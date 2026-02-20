@@ -1,20 +1,40 @@
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
-import pandas as pd
+from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
-from pycaret.classification import load_model, predict_model
+import pandas as pd
 
-# โหลดข้อมูลดิบ
-with open("dataset.csv", "r", encoding="utf-8") as f:
-    first_line = f.readline()
+# โหลด CSV จาก Kaggle
+df = pd.read_csv("nvidia_stock.csv")
+df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+df = df.dropna()
 
-if ";" in first_line:
-    df_raw = pd.read_csv("dataset.csv", sep=";", engine="python")
-else:
-    df_raw = pd.read_csv("dataset.csv", engine="python")
+app = Dash(__name__)
+app.title = "NVIDIA Dashboard"
 
-model = load_model("model_programming")
+app.layout = html.Div([
 
-app = dash.Dash(__name__)
+    html.H1("📈 NVIDIA Stock Dashboard", style={"textAlign": "center"}),
+
+    html.Div([
+        dcc.DatePickerRange(
+            id="date-picker",
+            start_date=df["Date"].min(),
+            end_date=df["Date"].max()
+        ),
+
+        dcc.Dropdown(
+            id="ma-dropdown",
+            options=[
+                {"label": "MA 20", "value": 20},
+                {"label": "MA 50", "value": 50},
+                {"label": "MA 100", "value": 100}
+            ],
+            value=20
+        )
+    ], style={"width": "60%", "margin": "auto"}),
+
+    dcc.Graph(id="price-chart"),
+    dcc.Graph(id="volume-chart"),
+    dcc.Graph(id="ma-chart")
+
+])
